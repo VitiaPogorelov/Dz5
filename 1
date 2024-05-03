@@ -1,0 +1,47 @@
+#include <iostream>
+#include <thread>
+#include <mutex>
+#include <vector>
+
+const int num_philosophers = 5;
+
+// Функция, описывающая действия философа
+void philosopher(int id, std::mutex* left_fork, std::mutex* right_fork) {
+    while (true) {
+        std::cout << "Философ " << id << " размышляет.\n";
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+
+        // Попытка взять левую вилку
+        left_fork->lock();
+        std::cout << "Философ " << id << " взял левую вилку.\n";
+
+        // Попытка взять правую вилку
+        right_fork->lock();
+        std::cout << "Философ " << id << " взял правую вилку.\n";
+
+        // Еда
+        std::cout << "Философ " << id << " ест.\n";
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+
+        // Кладем вилки обратно на стол
+        left_fork->unlock();
+        right_fork->unlock();
+
+        std::cout << "Философ " << id << " закончил есть и положил вилки на место.\n";
+    }
+}
+
+int main() {
+    std::vector<std::thread> philosophers;
+    std::mutex forks[num_philosophers];
+
+    for (int i = 0; i < num_philosophers; ++i) {
+        philosophers.push_back(std::thread(philosopher, i, &forks[i], &forks[(i + 1) % num_philosophers]));
+    }
+
+    for (auto& philosopher : philosophers) {
+        philosopher.join();
+    }
+
+    return 0;
+}
